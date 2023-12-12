@@ -49,6 +49,18 @@
 				</template>
 			</el-popover>
 		</div>
+
+
+
+    <!-- 聊天入口 -->
+    <div class="layout-navbars-breadcrumb-user-icon"  @click="showChat">
+      <el-badge :hidden="unreadTotal <= 0" :value="unreadTotal" :max="99">
+        <i class="fa fa-commenting-o" title="通讯"></i>
+      </el-badge>
+    </div>
+
+
+
 		<div class="layout-navbars-breadcrumb-user-icon mr10" @click="onScreenfullClick">
 			<i
 				class="iconfont"
@@ -77,6 +89,13 @@
 		</el-dropdown>
 		<Search ref="searchRef" />
 	</div>
+
+
+  <!-- 聊天窗口 -->
+  <Teleport to="body">
+    <ChatModal v-model="showModal"></ChatModal>
+  </Teleport>
+
 </template>
 
 <script lang="ts">
@@ -94,10 +113,16 @@ import UserNews from '/@/layout/navBars/breadcrumb/userNews.vue';
 import Search from '/@/layout/navBars/breadcrumb/search.vue';
 import {logout} from "/@/api/login";
 import {removeCache} from "/@/api/system/cache";
+// 聊天组件
+import ChatModal from '/src/components/chatModal/modal.vue'
+import {useChatStore} from "/@/stores/chat";
+const chatStore = useChatStore()
+
+
 
 export default defineComponent({
 	name: 'layoutBreadcrumbUser',
-	components: { UserNews, Search },
+	components: { UserNews, Search , ChatModal},
 	setup() {
 		const { t } = useI18n();
 		const { proxy } = <any>getCurrentInstance();
@@ -253,6 +278,15 @@ export default defineComponent({
 				initComponentSize();
 			}
 		});
+
+    // 聊天组件
+    const {unreadTotal} = storeToRefs(chatStore)
+    const showModal = ref(false)
+    const showChat = () => {
+      showModal.value = true
+    }
+
+
 		return {
 			userInfos,
 			onLayoutSetingClick,
@@ -265,6 +299,11 @@ export default defineComponent({
 			searchRef,
 			layoutUserFlexNum,
 			...toRefs(state),
+
+      // 聊天组件
+      showChat,
+      showModal,
+      unreadTotal
 		};
 	},
 });
