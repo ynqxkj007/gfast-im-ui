@@ -57,6 +57,15 @@ export default {
       searchValue:"",
     }
   },
+  watch:{
+    modelValue() {
+      if(this.modelValue){
+        this.friendList.forEach(item => {
+          item.checked = false
+        })
+      }
+    }
+  },
   computed:{
     show:{
       get() {
@@ -84,9 +93,6 @@ export default {
     },
     closeHandle() {
       this.show = false
-      this.friendList.forEach(item => {
-        item.checked = false
-      })
     }
 
   }

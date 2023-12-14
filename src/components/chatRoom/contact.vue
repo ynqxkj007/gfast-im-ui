@@ -6,7 +6,7 @@
         <img class="avatar" :src="currentUser.avatar" alt="头像"/>
       </div>
       <div class="right">
-        <div>{{ currentUser.username }}<span v-show="currentUser.online" style="color:#67C23A">[在线]</span><span v-show="!currentUser.online" style="color:#da0606">[已离线或已他处登录]</span></div>
+        <div>{{ currentUser.username }}<span v-show="currentUser.online" style="color:#67C23A;padding-left:2px;">[在线]</span><span v-show="!currentUser.online" style="color:#da0606;padding-left:2px;">[已离线或已他处登录]</span></div>
         <div style="display: flex">
           <div class="search">
             <IconInput v-model="searchValue" ></IconInput>
@@ -30,7 +30,7 @@
               </Badge>
             </div>
             <div class="right">
-              <p><span class="green-dot" v-if="friend.online"></span> {{ friend.username }}<span class="last-message" style="float:right;padding-right:15px;max-width:140px;">{{friend.lastMessage ? formatDate(friend.lastMessage.time): ""}}</span></p>
+              <p><span class="green-dot" v-if="friend.online"></span> {{ friend.username }}<span class="last-message last-message-time" >{{friend.lastMessage ? shortTime(friend.lastMessage.time): ""}}</span></p>
               <p class="last-message"  v-if="friend.lastMessage && friend.lastMessage.mType === 'txt'">{{truncateString(friend.lastMessage.message, 20)}}</p>
               <p class="last-message"  v-if="friend.lastMessage && friend.lastMessage.mType === 'img'">[图片]</p>
               <p class="last-message"  v-if="friend.lastMessage && friend.lastMessage.mType === 'file'">[文件]</p>
@@ -72,7 +72,7 @@
 
 <script>
 import Badge from './components/badge.vue'
-import {formatDate, truncateString} from './js/utils'
+import {formatDate, truncateString, shortTime} from './js/utils'
 import RightKeyMenu from "./components/contextMenu/ContextMenu.vue";
 import modal from "./components/modal/modal.vue";
 import IconInput from "./components/iconInput.vue"
@@ -100,8 +100,8 @@ export default {
       menuItems: [],
       showModal:false,
       searchValue: "", // 搜索好友
-      editRoomName:"",
-      editFriend: {}
+      editRoomName:"",    // 修改群聊名称
+      editFriend: {},     // 右键菜单选择的联系人
     }
   },
   computed:{
@@ -112,6 +112,7 @@ export default {
     }
   },
   methods: {
+    shortTime:shortTime,
     truncateString:truncateString,
     // 修改群聊名称
     editRoomNameHandle () {
@@ -271,7 +272,6 @@ export default {
 .friend {
   width: 360px;
   height: 60px;
-  //line-height: 60px;
   display: flex;
   align-items: center;
   border-bottom: #faf7f7 1px solid;
@@ -285,7 +285,6 @@ export default {
 }
 
 .friend .right {
-  //flex: 3;
   color: #575454;
   font-size: 14px;
 }
@@ -301,6 +300,12 @@ export default {
   height: 18px;
   line-height: 18px;
   padding-right:20px;
+}
+
+.last-message-time {
+  float:right;
+  padding-right:15px;
+  max-width:140px;
 }
 
 

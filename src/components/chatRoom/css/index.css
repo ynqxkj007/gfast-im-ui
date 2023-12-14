@@ -41,5 +41,10 @@
     border-radius: 3px;
     margin-left: 10px;
     cursor: pointer;
+}
 
+.dialog-title{
+    line-height: 24px;
+    font-size: 18px;
+    color: #252438;
 }

@@ -21,13 +21,19 @@ export default {
       type: Object,
       default() {
         return {
-          from: "",
-          to: "",
-          message: "",
-          time: "",
-          mType:'txt',       // 消息类型：file | img | txt
-          fileSize:0,         // 文件大小
-          fileName: '',       // 文件名称
+          "from": "",
+          "to": "",
+          "fromUserInfo": {
+            "uid": "",
+            "nickname": "",
+            "avatar": ""
+          },
+          "contactMark":"",
+          "message": "",
+          "time": "",
+          "mType": "",
+          "fileSize": 0,
+          "fileName": ""
         }
       }
     },

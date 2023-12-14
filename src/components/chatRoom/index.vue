@@ -20,12 +20,35 @@
         @getHistory="getHistoryHandle"
         @say="sayHandle"
         @addGroupMember="showAddGroupMemberHandle"
+        @editInform="showEditInformHandle"
       />
     </KeepAlive>
+
     <!--    新增群聊房间-->
     <ContactList v-drag="['.my-drag-contact', '.my-drag-contact-header']" class="group-chat" v-model="showGroupChat" :friendList="friendListNotRoom" @confirm="createGroupHandle"></ContactList>
+
     <!--    新增群聊人员-->
     <ContactList v-drag="['.my-drag-contact', '.my-drag-contact-header']" class="group-chat" v-model="showGroupMember" :friendList="addGroupMemberFriendList" @confirm="addGroupMemberHandle"></ContactList>
+
+    <!-- 编辑群公告 -->
+    <Teleport to="body">
+      <modal :show="showEditInformModal" @close="showEditInformModal = false">
+        <template #header>
+          <span class="dialog-title">编辑群公告</span>
+        </template>
+
+        <template #body>
+          <multilineInput v-model="editInformContent" placeholder="群公告"></multilineInput>
+        </template>
+
+        <template  #footer>
+          <button class="my-button" @click="editRoomInformHandle">确定</button>
+          <button class="my-info-button" @click="showEditInformModal = false">取消</button>
+        </template>
+
+      </modal>
+    </Teleport>
+
   </div>
 </template>
 
@@ -35,13 +58,13 @@ import Contact from "./contact.vue";
 import historyMessage from "./js/historyMessage.js";
 import {deepCopy} from './js/utils'
 import ContactList from './components/contactList.vue'
-import {drag} from "/@/components/chatRoom/js/customDirective";
+import {drag} from "./js/customDirective";
 import './css/index.css'
-
-
+import modal from "./components/modal/modal.vue";
+import multilineInput from "./components/multilineInput/multilineInput.vue";
 export default {
   name: 'myChat',
-  components: {Contact, MyDialog, ContactList},
+  components: {Contact, MyDialog, ContactList, modal, multilineInput},
   directives:{
     drag
   },
@@ -77,8 +100,9 @@ export default {
     return {
       contact: null,      // 当前激活的联系人
       showGroupChat: false, // 新增群聊房间
-      showGroupMember: false,
-
+      showGroupMember: false,   // 显示添加群成员
+      showEditInformModal: false, // 显示编辑群公告
+      editInformContent: "", // 编辑群公告内容
     }
   },
 
@@ -142,6 +166,27 @@ export default {
       this.showGroupMember = true
     },
 
+    // 显示编辑群公告
+    showEditInformHandle() {
+      //console.log(this.contact)
+      const {id,roomInform} = this.contact
+      this.editInformContent = roomInform
+      this.showEditInformModal = true
+    },
+    // 编辑公告
+    editRoomInformHandle() {
+      const {id} = this.contact
+      this.$emit("editRoomInform", {
+        close: (isEdit = false) => {
+          if (isEdit) {
+            this.contact.roomInform = this.editInformContent
+          }
+          this.showEditInformModal = false
+        },
+        id: id,
+        content: this.editInformContent
+      })
+    },
     // 新增群聊房间
     addGroupChatHandle() {
       this.showGroupChat = true
@@ -218,17 +263,12 @@ export default {
           this.$refs['dialog_' + this.contactId].addMsgList(msg)
         }
         if (!this.show) {
-          this.addUnread(uid)
+          !msg.isSys && this.addUnread(uid)
         }
       } else {
         // 非激活窗口
         historyMessage.addMsgList(uid, msg)
-        //  设置最后一条信息及未读数量
-        const friend = this.getFriend(uid)
-        if (friend) {
-          friend.unread += 1
-          friend.lastMessage = msg
-        }
+        !msg.isSys && this.setLastMessageAndUnread(uid,msg)
       }
     },
 
@@ -239,10 +279,11 @@ export default {
       }
     },
 
-    setLastMessage (uid, msg) {
+    setLastMessageAndUnread (uid, msg) {
       const friend  = this.getFriend(uid)
       if (friend) {
         friend.lastMessage = msg
+        friend.unread += 1
       }
     },
 

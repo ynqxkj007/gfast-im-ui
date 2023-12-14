@@ -74,3 +74,13 @@ export function quitRoom(data:any) {
         data
     })
 }
+
+// 更新群聊公告
+export function updateRoomNotice(data:any) {
+    return request({
+        url: '/api/v1/chat/updateRoomNotice',
+        method: 'post',
+        data
+    })
+}
+

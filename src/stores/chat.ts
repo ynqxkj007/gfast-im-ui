@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import Observer from '/@/utils/websocket/Observer.js'
+import Observer  from '/@/utils/websocket/Observer.js'
 import { Session } from '/@/utils/storage';
 import {getUserList, getOnlineUserList, getRoomList} from "/@/api/chat/chat";
 
@@ -17,6 +17,7 @@ interface iUser {
     id: string,
     avatar: string,
     username: string,
+    new_join?: boolean,
 }
 
 interface iFriend extends iUser{
@@ -25,6 +26,7 @@ interface iFriend extends iUser{
     isRoom: boolean,
     roomUsers: iUser[] | undefined,
     bequiet:boolean,
+    roomInform: string,
     lastMessage: iMessage
 }
 
@@ -52,9 +54,27 @@ export const useChatStore = defineStore('chat', {
         }
     },
     actions: {
-
+        // 群成员退出
+        removeRoomUser(id:string, roomUsers:iUser[]) {
+            if (!id ||!roomUsers) {
+                return
+            }
+            let room = this.friendList.find((friend:iFriend)=> {
+                return friend.id === id
+            })
+            roomUsers.forEach((item:iUser)=> {
+                if (room && room.roomUsers) {
+                    let index = room.roomUsers.findIndex((user:iUser)=> {
+                        return user.id === item.id
+                    })
+                    if (index > -1) {
+                        room.roomUsers.splice(index, 1)
+                    }
+                }
+            })
+        },
         // 新增群聊成员
-        addRoomUser(id:string, roomUsers:iUser[]) {
+        addRoomUser(id:string, name:string, roomUsers:iUser[]) {
             if (!id || !roomUsers) {
                 return
             }
@@ -62,11 +82,13 @@ export const useChatStore = defineStore('chat', {
                 return item.id === id
             })
             if (room && room.roomUsers) {
-                room.roomUsers.push(...roomUsers)
+                room.roomUsers.push(...roomUsers.filter(item=> item.new_join))
+            } else {
+                this.addRoom(id, name, roomUsers)
             }
         },
         // 新增群聊
-        addRoom(id:string, name:string, roomUsers:iUser[]) {
+        addRoom(id:string, name:string, roomUsers:iUser[], param:{ [key: string]: any;} = {}) {
             if (!id) {
                 return
             }
@@ -80,6 +102,7 @@ export const useChatStore = defineStore('chat', {
                 isRoom: true,
                 roomUsers:roomUsers,
                 bequiet: false,
+                roomInform: param.roomInform || "",
                 lastMessage:{
                     from: "",
                     to: "",
@@ -104,7 +127,7 @@ export const useChatStore = defineStore('chat', {
                     const {list} = data
                     if (Array.isArray(list)) {
                         list.forEach((item:any)=> {
-                            const {identify,name, messageRoomMemberSuperList} = item
+                            const {identify, name, messageRoomMemberSuperList, inform} = item
                             const userList:iUser[] = []
                             if (Array.isArray(messageRoomMemberSuperList)) {
                                 messageRoomMemberSuperList.forEach((item:any)=> {
@@ -118,7 +141,7 @@ export const useChatStore = defineStore('chat', {
                                     }
                                 })
                             }
-                            this.addRoom(identify, name, userList)
+                            this.addRoom(identify, name, userList, {roomInform:inform})
                         })
                     }
                 } else {
@@ -142,6 +165,7 @@ export const useChatStore = defineStore('chat', {
                                 online:false,      // 是否在线
                                 isRoom: false,
                                 bequiet: false,     // 消息免打扰
+                                roomInform:"",
                                 lastMessage:{
                                     from: "",
                                     to: "",
@@ -202,6 +226,15 @@ export const useChatStore = defineStore('chat', {
             }
             return undefined
         },
+
+        setLastMessageAndAddMsgNumber (uid:string,message:iMessage) {
+            const user = this.getUser(uid)
+            if (user) {
+                user.lastMessage = message
+                user.unread+=1
+            }
+        },
+
         setLastMessage (uid:string, message:iMessage) {
             const user = this.getUser(uid)
             if (user) {

@@ -14,25 +14,28 @@
       <div class="loading history" v-if="!isLoading && !isDone" @click="getHistory">点击获取历史数据</div>
       <div v-if="msgList.length">
         <div v-for="msg in msgList" :key="msg.from+ '_' + msg.time">
+          <Notice :message="msg"></Notice>
 
-          <div v-if="msg.from === currentUser.id" class="msg"  style="flex-direction: row-reverse;">
-            <div class="avatar">
-              <img :src="currentUser.avatar" alt="头像"/>
+          <template v-if="!msg.isSys">
+            <div v-if="msg.from === currentUser.id" class="msg"  style="flex-direction: row-reverse;">
+              <div class="avatar">
+                <img :src="currentUser.avatar" alt="头像"/>
+              </div>
+              <div style="flex: 13;">
+                <Message class="bubble-msg-right" style="margin-left: 75px;" :baseUrl="baseUrl" :message="msg"></Message>
+              </div>
             </div>
-            <div style="flex: 13;">
-              <Message class="bubble-msg-right" style="margin-left: 75px;" :baseUrl="baseUrl" :message="msg"></Message>
-            </div>
-          </div>
 
-          <div v-else  class="msg" style="flex-direction: row;">
-            <div class="avatar">
-              <img :src="contact.isRoom ? roomFace(msg.from) : contact.avatar " alt="头像"/>
+            <div v-else  class="msg" style="flex-direction: row;">
+              <div class="avatar">
+                <img :src="msg.fromUserInfo.avatar" alt="头像"/>
+              </div>
+              <div style="flex: 13;">
+                <p v-show="contact.isRoom" class="bubble-msg-username" >{{msg.fromUserInfo.nickname || ''}}</p>
+                <Message class="bubble-msg-left" style="margin-right: 75px;" :baseUrl="baseUrl" :message="msg"></Message>
+              </div>
             </div>
-            <div style="flex: 13;">
-              <Message class="bubble-msg-left" style="margin-right: 75px;" :baseUrl="baseUrl" :message="msg"></Message>
-            </div>
-          </div>
-
+          </template>
 
         </div>
       </div>
@@ -59,13 +62,12 @@
     </div>
 
     <div class="right-menu" v-if="showRightMenu && contact.isRoom">
-      <div class="notice-title">群公告</div>
+      <div class="notice-title"><span>群公告</span><img style="width:16px;cursor: pointer" src="./img/edit.png" alt="编辑公告" @click="editInform"></div>
       <div class="notice-content">
-        暂无公告
+        {{contact.roomInform}}
       </div>
       <div class="member-title"><span>群成员</span> <img style="width:16px;cursor: pointer" src="./img/add.png" alt="添加成员" @click="addRoomMember"></div>
       <div class="member-list">
-
         <div v-for="item in contact.roomUsers" :key="item.id" class="friend">
           <div class="left">
             <img class="avatar" :src="item.avatar"/>
@@ -74,9 +76,9 @@
             <p>{{ item.username }}</p>
           </div>
         </div>
-
       </div>
     </div>
+
   </div>
 
   <div v-else class="info">
@@ -91,12 +93,14 @@
 import {debounce, formatDate} from './js/utils'
 import UploadImg from "./components/uploadImg.vue";
 import Message from "./components/message.vue"
+import Notice from  "./components/notice/notice.vue"
 
 export default {
   name: "myDialog",
   components:{
     UploadImg,
-    Message
+    Message,
+    Notice
   },
   props: {
     currentUser: {
@@ -180,6 +184,11 @@ export default {
   },
   methods: {
 
+    // 编辑公告
+    editInform() {
+      this.$emit('editInform', this.contact)
+    },
+
     // 新增成员
     addRoomMember() {
       // console.log(this.contact)
@@ -258,6 +267,12 @@ export default {
         let entity = {
           from: this.currentUser.id,
           to: this.contact.isRoom ? 0 : this.contact.id,
+          fromUserInfo: {
+            uid: this.currentUser.id,
+            nickname: this.currentUser.username,
+            avatar: this.currentUser.avatar
+          },
+          contactMark:this.contact.id,
           message: path,
           time: formatDate(new Date()),
           mType:'img',       // 消息类型：file | img | txt
@@ -265,7 +280,7 @@ export default {
           fileName: name,       // 文件名称
           isRoom: this.contact.isRoom,
           roomUsers: this.contact.roomUsers,
-          roomId: this.contact.id,
+          roomId: this.contact.isRoom ? this.contact.id: "",
         }
 
         this.addMsgList(entity)
@@ -284,6 +299,14 @@ export default {
       let entity = {
         from: this.currentUser.id,
         to: this.contact.isRoom ? 0 : this.contact.id,
+        fromUserInfo: {
+          uid: this.currentUser.id,
+          nickname: this.currentUser.username,
+          avatar: this.currentUser.avatar
+        },
+        contactMark:this.contact.id,
+        isSys: 0,
+        type: 0,
         message: this.msg,
         time: formatDate(new Date()),
         mType:'txt',       // 消息类型：file | img | txt
@@ -291,7 +314,7 @@ export default {
         fileName: '',       // 文件名称
         isRoom: this.contact.isRoom,
         roomUsers: this.contact.roomUsers,
-        roomId: this.contact.id,
+        roomId: this.contact.isRoom ? this.contact.id: "",
       }
       this.addMsgList(entity)
       this.$emit("say", this.contact.id,  entity)
@@ -334,6 +357,7 @@ export default {
   border-bottom: #d0d0d0 1px solid;
   display: flex;
   align-items: center;
+  justify-content:space-between;
 }
 
 .dialog .right-menu .notice-content {
@@ -435,6 +459,7 @@ export default {
 
 .middle .msg {
   display: flex;
+  padding-top:10px;
 }
 
 .middle .msg .avatar {
@@ -451,12 +476,20 @@ export default {
 .bubble-msg-left, .bubble-msg-right {
   padding: 10px;
   font-size: 14px;
-  margin-top: 10px;
+  margin-top: 5px;
   line-height: 24px;
   border-radius: 5px;
   width: fit-content;
   line-break: anywhere;
 }
+
+.bubble-msg-username {
+  font-size:12px;
+  color:#b9b9b9;
+  position: relative;
+  left: -10px
+}
+
 
 .bubble-msg-left {
   float: left;
@@ -516,7 +549,6 @@ export default {
   background: #efeded;
   border: 0 none;
   overflow-y: auto;
-  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   resize: none;
   vertical-align: middle;
@@ -551,8 +583,6 @@ export default {
   cursor: pointer;
 }
 
-
-
 .emptyText {
   background-color: #d0d0d0;
 }
@@ -560,7 +590,7 @@ export default {
 .loading {
   text-align: center;
   font-size: 12px;
-  color: #999;
+  color: #398ee5;
   height: 18px;
   line-height: 18px;
 }
@@ -568,5 +598,6 @@ export default {
 .history {
   cursor: pointer;
 }
+
 
 </style>

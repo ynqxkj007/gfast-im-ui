@@ -20,6 +20,7 @@
           @quitRoom="quitRoomHandle"
           @topMessage="topMessageHandle"
           @bequiet="bequietHandle"
+          @editRoomInform="editRoomInformHandle"
       >
       </myChat>
     </div>
@@ -35,7 +36,7 @@ import {useChatStore} from "/@/stores/chat";
 import {useUserInfo} from "/@/stores/userInfo";
 import {Session} from "/@/utils/storage";
 import {ElMessage} from "element-plus";
-import {getHistoryMessage, addRoom, updateRoomName, quitRoom, addGroupMember} from "/@/api/chat/chat";
+import {getHistoryMessage, addRoom, updateRoomName, quitRoom, addGroupMember, updateRoomNotice} from "/@/api/chat/chat";
 import {buildImgUrl} from '/@/components/chatRoom/js/utils.js'
 
 const chatStore = useChatStore()
@@ -100,6 +101,20 @@ const quitRoomHandle = ({friend}) => {
   })
 }
 
+//// 修改群聊的公告
+const editRoomInformHandle = ({close, id, content})=> {
+  //console.log(id, content)
+  updateRoomNotice({id:id, inform:content}).then(res=>{
+    const {code, message} = res
+    if (code === 0) {
+      close(true)
+    } else {
+      ElMessage.error(message || '修改群聊公告错误')
+    }
+  })
+}
+
+
 
 // 修改群聊名称
 const editRoomNameHandle = ({friend, name, close}) => {
@@ -156,13 +171,7 @@ const addGroupMemberHandle = ({checked, contact, close}) =>  {
   }).then(res => {
     const {code, data, message} = res
     if (code === 0) {
-      chatStore.addRoomUser(contact.id, Array.isArray(data.userList) ? data.userList.map(item => {
-        return {
-          id: item.id + "",
-          avatar: item.avatar ? buildImgUrl(item.avatar, baseUrl) : chatStore.chatDefaultFace,
-          username: item.userNickname,
-        }
-      }): [])
+      ElMessage.success('添加成功')
     } else {
       ElMessage.error(message)
     }
@@ -235,9 +244,18 @@ const scrollTopHandle = ({cancel, done, addHistoryMsg,  contactId, firstDate})=>
         if (Array.isArray(messageListSuperList) && messageListSuperList.length > 0) {
           const mTypeTxt = ['txt', 'img']
           const messageList = messageListSuperList.reverse().map(item => {
+            const {fromSysUser} = item
             return {
               from: item.from + "",
               to: item.to + "",
+              fromUserInfo:{
+                uid: fromSysUser.id ? fromSysUser.id + "" : "",
+                nickname: fromSysUser.userNickname || "",
+                avatar: buildImgUrl(fromSysUser.avatar || ""),
+              },
+              contactMark : item.roomId ? item.roomId : contactId + "",
+              isSys: 0,
+              type: 0,
               message: item.messageContentSuper.content,
               time: item.msgTime,
               mType: mTypeTxt[item.ctype],       // 消息类型：file | img | txt
@@ -332,40 +350,122 @@ onMounted(async ()=> {
         const message = JSON.parse(res.data)
         // console.log(message)
         /**
-         * type: 0 用户消息 1 用户进入 2 用户退出 3 错误消息
+         * type: 0 用户消息 1 用户进入 2 用户退出 3 错误消息 4 新增群聊 5 群成员加入 6 群成员退出
          * c_type: 0 文本 1 图片
-         * isSys: 0 普通用户 1 系统消息
+         * isSys: 0 普通用户消息 1 系统消息
          */
         const {c_type, content, msg_time, type, user, ats, room_id} = message
         const {addr, enterAt, isSys, payload, uid} = user // 发信人
-        const {nickname} = payload
+        const {nickname, avatar} = payload || {}
+
+        let contactMark = uid
+        if (room_id) {
+          contactMark = room_id
+        }
+
         if (isSys === 1) {
           // 系统消息
           if (type === 3) {
             // 错误消息
-            console.log(content)
+            //console.log(content)
             ElMessage.warning(content || '连接错误');
           } else if (type === 4) {
-            console.log(content)
-            // 加入群聊
+            //console.log(content)
+            // 新增群聊
             if (content) {
               const roomInfo = JSON.parse(content)
-              console.log(roomInfo)
+              //console.log(roomInfo)
               chatStore.addRoom(roomInfo.id, roomInfo.name, roomInfo.users)
             }
+          } else if (type === 5) {
+            // 群成员加入
+            if (content) {
+              const roomInfo = JSON.parse(content)
+              //console.log(roomInfo)
+              chatStore.addRoomUser(roomInfo.id,roomInfo.name, roomInfo.users)
+              const joinUsers = roomInfo.users.filter(item=> item.new_join).map(item=> item.username).join(",")
+              const m = {
+                from: uid,
+                fromUserInfo:{
+                  uid: uid,
+                  nickname: nickname,
+                  avatar: buildImgUrl(avatar),
+                },
+                contactMark: contactMark,
+                isSys: isSys,
+                type: type,
+                to: currentUser.value.id,
+                message: `${joinUsers} 加入群聊`,
+                time: msg_time,
+                mType:'txt',       // 消息类型：file | img | txt
+                fileSize:0,         // 文件大小
+                fileName: '',       // 文件名称
+              }
+              myChatRef.value.addMsgList(contactMark, m)
 
+            }
+          } else if (type === 6) {
+            // 群成员退出
+            if (content) {
+              const roomInfo = JSON.parse(content)
+              //console.log(roomInfo)
+              chatStore.removeRoomUser(roomInfo.id, roomInfo.users)
+              const joinUsers = roomInfo.users.map(item=> item.username).join(",")
+              const m = {
+                from: uid,
+                fromUserInfo:{
+                  uid: uid,
+                  nickname: nickname,
+                  avatar: buildImgUrl(avatar),
+                },
+                contactMark: contactMark,
+                isSys: isSys,
+                type: type,
+                to: currentUser.value.id,
+                message:  `${joinUsers} 退出群聊`,
+                time: msg_time,
+                mType:'txt',       // 消息类型：file | img | txt
+                fileSize:0,         // 文件大小
+                fileName: '',       // 文件名称
+              }
+              myChatRef.value.addMsgList(contactMark, m)
+            }
+          } else if (type === 7) {
+            // 新的群公告
+            const m = {
+              from: uid,
+              fromUserInfo:{
+                uid: uid,
+                nickname: nickname,
+                avatar: buildImgUrl(avatar),
+              },
+              contactMark: contactMark,
+              isSys: isSys,
+              type: type,
+              to: currentUser.value.id,
+              message:  content,
+              time: msg_time,
+              mType:'txt',       // 消息类型：file | img | txt
+              fileSize:0,         // 文件大小
+              fileName: '',       // 文件名称
+            }
+            myChatRef.value.addMsgList(contactMark, m)
           }
         } else {
-          // 普通用户消息
-          let roomIdMark = uid
-          if (room_id) {
-            roomIdMark = room_id
-          }
 
+          // 普通用户消息
           if (type === 0) {
             // 用户消息
             const m = {
               from: uid,
+              fromUserInfo:{
+                uid: uid,
+                nickname: nickname,
+                avatar: buildImgUrl(avatar),
+              },
+              contactMark: contactMark,
+              isSys: isSys,
+              type: type,
               to: currentUser.value.id,
               message: content,
               time: msg_time,
@@ -373,19 +473,18 @@ onMounted(async ()=> {
               fileSize:0,         // 文件大小
               fileName: '',       // 文件名称
             }
-
             if (c_type === 1) {
               m.mType = 'img'
             }
-            myChatRef.value.addMsgList(roomIdMark, m)
-            chatStore.messageTop(roomIdMark)
+            myChatRef.value.addMsgList(contactMark, m)
+            chatStore.messageTop(contactMark)
           } else if (type === 1) {
             // 用户进入
-            chatStore.online(roomIdMark)
-            chatStore.messageTop(roomIdMark)
+            chatStore.online(contactMark)
+            chatStore.messageTop(contactMark)
           } else if (type === 2) {
             // 用户退出
-            chatStore.offline(roomIdMark)
+            chatStore.offline(contactMark)
           }
 
         }
@@ -428,7 +527,6 @@ onUnmounted(()=> {
 
 .modal-container {
   margin: auto;
-  //padding: 20px 30px;
   background-color: #fff;
   border-radius: 2px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
