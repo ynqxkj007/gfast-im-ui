@@ -99,7 +99,7 @@
 </template>
 
 <script lang="ts">
-import { ref, getCurrentInstance, computed, reactive, toRefs, onMounted, defineComponent } from 'vue';
+import { ref, getCurrentInstance, computed, reactive, toRefs, onMounted,onUnmounted, defineComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -285,7 +285,15 @@ export default defineComponent({
     const showChat = () => {
       showModal.value = true
     }
+    console.log(proxy.bus)
+    const cancel = proxy.bus.on('showChat',()=>{
+      showChat()
+    })
 
+
+    onUnmounted(() => {
+      cancel()
+    })
 
 		return {
 			userInfos,

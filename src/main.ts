@@ -24,6 +24,8 @@ import uploader from 'vue-simple-uploader'
 import 'vue-simple-uploader/dist/style.css'
 
 
+
+
 const app = createApp(App);
 
 directive(app);
@@ -48,6 +50,9 @@ app.config.globalProperties.setItems=setItems
 app.config.globalProperties.getOptionValue=getOptionValue
 app.config.globalProperties.isEmpty=isEmpty
 app.config.globalProperties.parseTime=parseTime
+// 事件总线
+import EventBus from "/@/eventbus";
+app.config.globalProperties.bus = EventBus;
 
 const globalProperties={
     mittBus: mitt(),

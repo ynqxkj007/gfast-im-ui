@@ -229,6 +229,9 @@ const getHistoryHandle = (params)=> {
 const scrollTopHandle = ({cancel, done, addHistoryMsg,  contactId, firstDate})=> {
   //console.log( contactId, firstDate)
 
+  // "演示站不进数据库"提示可注释
+  ElMessage.error("演示站聊天记录不进数据库")
+
   if(firstDate) {
     getHistoryMessage({
       formId: currentUser.value.id,
