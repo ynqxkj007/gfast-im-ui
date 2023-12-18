@@ -285,7 +285,7 @@ export default defineComponent({
     const showChat = () => {
       showModal.value = true
     }
-    console.log(proxy.bus)
+    //console.log(proxy.bus)
     const cancel = proxy.bus.on('showChat',()=>{
       showChat()
     })

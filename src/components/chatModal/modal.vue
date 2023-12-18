@@ -38,6 +38,8 @@ import {Session} from "/@/utils/storage";
 import {ElMessage} from "element-plus";
 import {getHistoryMessage, addRoom, updateRoomName, quitRoom, addGroupMember, updateRoomNotice} from "/@/api/chat/chat";
 import {buildImgUrl} from '/@/components/chatRoom/js/utils.js'
+import {getEditUser} from '/@/api/system/user/index'
+
 
 const chatStore = useChatStore()
 const userInfoStore = useUserInfo()
@@ -150,13 +152,17 @@ const uploadUrl = ref(getUploadUrl())
 
 const  currentUserOnline = ref(false)
 
+
+//  当前登录人信息
 // console.log(localUserInfo)
+const currentUserInfo = ref({})
+
 // 当前登录用户
 const currentUser = computed(()=> {
   return {
-    id: localUserInfo.value ? localUserInfo.value.id + "" : "",
-    avatar:localUserInfo.value.avatar ? buildImgUrl(localUserInfo.value.avatar, baseUrl) : chatStore.chatDefaultFace,
-    username:localUserInfo.value ? localUserInfo.value.userNickname : "",
+    id: currentUserInfo.value.id ? currentUserInfo.value.id + "" : "",
+    avatar:currentUserInfo.value.avatar ? buildImgUrl(currentUserInfo.value.avatar, baseUrl) : chatStore.chatDefaultFace,
+    username:currentUserInfo.value.userNickname? currentUserInfo.value.userNickname : "",
     online:currentUserOnline.value,
   }
 })
@@ -332,6 +338,18 @@ const sendMessage = (data)=> {
 
 
 onMounted(async ()=> {
+  // 获取当前登录人信息
+  getEditUser(localUserInfo.value.id).then(res=> {
+    //console.log(res)
+    const {code, data} = res
+    // console.log(data.user)
+    if (code === 0) {
+      //const {id, avatar, userNickname} = data.user || {}
+      currentUserInfo.value = data.user || {}
+
+    }
+
+  })
 
   await Promise.all([chatStore.initRoom(), chatStore.initFriendList({notSelf:1})])
   chatStore.connect({
@@ -503,6 +521,11 @@ onMounted(async ()=> {
     uploadUrl.value = getUploadUrl()
     chatStore.resetUrl()
   }
+
+
+
+
+
 })
 
 onUnmounted(()=> {

@@ -246,6 +246,7 @@ export default {
   width: 48px;
   height: 48px;
   border-radius: 4px;
+  background-color: #f5f5f5;
 }
 
 

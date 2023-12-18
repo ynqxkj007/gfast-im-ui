@@ -35,6 +35,9 @@ const wsUrl = baseUrl + "api/v1/chat/ws"
 import chatDefaultFace from '/@/components/chatRoom/img/default_avatar.png'
 import groupChatFace from '/@/components/chatRoom/img/group_chat.png'
 import {buildImgUrl} from '/@/components/chatRoom/js/utils.js'
+import avatarBuilder from '/@/components/chatRoom/js/avatar.js'
+
+
 
 export const useChatStore = defineStore('chat', {
     state: () => {
@@ -88,14 +91,19 @@ export const useChatStore = defineStore('chat', {
             }
         },
         // 新增群聊
-        addRoom(id:string, name:string, roomUsers:iUser[], param:{ [key: string]: any;} = {}) {
+        async addRoom(id:string, name:string, roomUsers:iUser[], param:{ [key: string]: any;} = {}) {
             if (!id) {
                 return
             }
+            //console.log(roomUsers)
+            const groupAvatar = await avatarBuilder.create(roomUsers.slice(0, 9).map((item:iUser)=> {
+                return item.avatar
+            }))
+
             // console.log( id, name, roomUsers)
             this.friendList.unshift({
                 id: id,
-                avatar: groupChatFace,
+                avatar: groupAvatar || groupChatFace,
                 username: name,
                 unread: 0,
                 online:false,

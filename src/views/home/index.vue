@@ -6,6 +6,8 @@
         <div style="text-align: center;margin-top: 100px;">
           <el-link type="primary" underline style="font-size:32px;" @click="enterChat">点击进入即时通讯模块</el-link>
         </div>
+
+
 <!--		<el-row :gutter="15" class="home-card-one mb15">-->
 <!--			<el-col-->
 <!--				:xs="24"-->
