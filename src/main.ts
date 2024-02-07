@@ -24,8 +24,6 @@ import uploader from 'vue-simple-uploader'
 import 'vue-simple-uploader/dist/style.css'
 
 
-
-
 const app = createApp(App);
 
 directive(app);

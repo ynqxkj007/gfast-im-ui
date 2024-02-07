@@ -44,7 +44,10 @@
     <div class="line"></div>
     <div class="bottom">
       <div class="tools">
+<!--        发送图片-->
         <span><UploadImg  :uploadUrl="uploadUrl" @success="uploadImgSuccess"></UploadImg></span>
+<!--        单人视频通话-->
+        <Video v-if="!contact.isRoom" :contact="contact" style="margin-left:10px; cursor: pointer;" @initVideo="e => $emit('initVideo', e)"></Video>
       </div>
       <label>
         <textarea
@@ -61,6 +64,7 @@
       </div>
     </div>
 
+<!--    群聊面板-->
     <div class="right-menu" v-if="showRightMenu && contact.isRoom">
       <div class="notice-title"><span>群公告</span><img style="width:16px;cursor: pointer" src="./img/edit.png" alt="编辑公告" @click="editInform"></div>
       <div class="notice-content">
@@ -94,13 +98,16 @@ import {debounce, formatDate} from './js/utils'
 import UploadImg from "./components/uploadImg.vue";
 import Message from "./components/message.vue"
 import Notice from  "./components/notice/notice.vue"
+import Video from "./components/video.vue"
+
 
 export default {
   name: "myDialog",
   components:{
     UploadImg,
     Message,
-    Notice
+    Notice,
+    Video
   },
   props: {
     currentUser: {
@@ -135,6 +142,7 @@ export default {
       isDone: false,    // 没有更多的历史数据
       callback: undefined,
       showRightMenu: false,
+      showRightMenuSingle: false, // 单聊
     }
   },
   watch: {
@@ -198,7 +206,9 @@ export default {
     // 更多
     moreHandle () {
       //console.log(this.contact)
+      // 群聊
       this.showRightMenu = !this.showRightMenu
+      // 单聊
     },
 
     roomFace (to) {
@@ -326,6 +336,7 @@ export default {
 </script>
 
 <style scoped>
+
 :root {
   --scroll-color: #0000;
 }

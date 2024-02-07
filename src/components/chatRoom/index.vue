@@ -16,6 +16,7 @@
         :contact="contact"
         :uploadUrl="uploadUrl"
         :baseUrl="baseUrl"
+        @initVideo="e => $emit('initVideo', e)"
         @scrollTop="scrollTopHandle"
         @getHistory="getHistoryHandle"
         @say="sayHandle"
@@ -25,14 +26,18 @@
     </KeepAlive>
 
     <!--    新增群聊房间-->
-    <ContactList v-drag="['.my-drag-contact', '.my-drag-contact-header']" class="group-chat" v-model="showGroupChat" :friendList="friendListNotRoom" @confirm="createGroupHandle"></ContactList>
+    <Teleport to="body">
+      <ContactList v-drag="['.my-drag-contact', '.my-drag-contact-header']" class="group-chat" v-model="showGroupChat" :friendList="friendListNotRoom" @confirm="createGroupHandle"></ContactList>
+    </Teleport>
 
     <!--    新增群聊人员-->
-    <ContactList v-drag="['.my-drag-contact', '.my-drag-contact-header']" class="group-chat" v-model="showGroupMember" :friendList="addGroupMemberFriendList" @confirm="addGroupMemberHandle"></ContactList>
+    <Teleport to="body">
+      <ContactList v-drag="['.my-drag-contact', '.my-drag-contact-header']" class="group-chat" v-model="showGroupMember" :friendList="addGroupMemberFriendList" @confirm="addGroupMemberHandle"></ContactList>
+    </Teleport>
 
     <!-- 编辑群公告 -->
     <Teleport to="body">
-      <modal :show="showEditInformModal" @close="showEditInformModal = false">
+      <modal v-drag="['.modal-box', '.modal-header']" :visible="showEditInformModal" @close="showEditInformModal = false">
         <template #header>
           <span class="dialog-title">编辑群公告</span>
         </template>
@@ -60,6 +65,7 @@ import {deepCopy} from './js/utils'
 import ContactList from './components/contactList.vue'
 import {drag} from "./js/customDirective";
 import './css/index.css'
+import './css/icon.css'
 import modal from "./components/modal/modal.vue";
 import multilineInput from "./components/multilineInput/multilineInput.vue";
 export default {
@@ -318,7 +324,7 @@ export default {
   background-color: #efeded;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0,.12), 0 0 6px rgba(0, 0, 0,.04);
-  z-index: 2;
+  z-index: 1001;
 }
 
 </style>

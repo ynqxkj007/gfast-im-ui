@@ -126,6 +126,8 @@ export function buildImgUrl (url, baseUrl) {
     }
 }
 
+
+// 截取字符串
 export  function truncateString(str, maxLength) {
     if (!str || str.length <= maxLength) {
         return str;
@@ -133,3 +135,34 @@ export  function truncateString(str, maxLength) {
 
     return str.substring(0, maxLength - 3) + "...";
 }
+
+// 生成唯一值
+export function generateUniqueValue(customString) {
+    // 获取当前时间戳（毫秒级）
+    const timestamp = new Date().getTime();
+    // 生成UUID
+    const uuid = generateUUID();
+    // 与自定义字符串和UUID拼接，生成唯一值
+    return `${customString}-${timestamp}-${uuid}`;
+}
+
+
+// 生成UUID
+export function generateUUID() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        try {
+            // 在支持的浏览器中，使用crypto.randomUUID()生成UUID
+            return crypto.randomUUID();
+        } catch (e) {
+            // 如果crypto对象不可用或者randomUUID()方法不可用，捕获异常并使用备用方法
+            console.error('Crypto.getRandomValues() or crypto.randomUUID() is not available.');
+        }
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+
+

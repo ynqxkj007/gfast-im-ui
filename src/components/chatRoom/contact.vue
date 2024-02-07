@@ -48,7 +48,7 @@
 
     <Teleport to="body">
       <!-- 使用这个 modal 组件，传入 prop -->
-      <modal :show="showModal" @close="showModal = false">
+      <modal :visible="showModal" @close="showModal = false">
         <template #header>
           <h3>修改群聊名称</h3>
         </template>
