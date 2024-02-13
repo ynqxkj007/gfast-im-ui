@@ -4,6 +4,8 @@ import { defineConfig, loadEnv, ConfigEnv } from 'vite';
 import vueSetupExtend from 'vite-plugin-vue-setup-extend-plus';
 import viteCompression from 'vite-plugin-compression';
 import { buildConfig } from './src/utils/build';
+import fs from 'fs';
+
 
 const pathResolve = (dir: string) => {
 	return resolve(__dirname, '.', dir);
@@ -23,6 +25,10 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 		base: mode.command === 'serve' ? './' : env.VITE_PUBLIC_PATH,
 		optimizeDeps: { exclude: ['vue-demi'] },
 		server: {
+			https: {
+				key: fs.readFileSync('keys/private.key'),
+				cert: fs.readFileSync('keys/private.crt')
+			},
 			host: '0.0.0.0',
 			port: env.VITE_PORT as unknown as number,
 			open: JSON.parse(env.VITE_OPEN),
@@ -34,6 +40,12 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					changeOrigin: true,
 					rewrite: (path) => path.replace(/^\/gitee/, ''),
 				},
+				'/apix': {
+					target: 'http://192.168.3.82:8808', // 目标服务器地址
+					ws: true,
+					changeOrigin: true, // 是否改变源地址
+					rewrite: (path) => path.replace(/^\/apix/, '') // 重写路径，移除 /api 前缀
+				}
 			},
 		},
 		build: {

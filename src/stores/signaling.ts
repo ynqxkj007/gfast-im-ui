@@ -14,6 +14,12 @@ export const useSignalingStore = defineStore("signaling", {
         }
     },
     actions:{
+
+        getRemote(key) {
+            if (this.remotes[key]) {
+                return this.remotes[key]
+            }
+        },
         closeRemotes(key) {
             if (this.remotes[key]) {
                 this.remotes[key].pc.close()
@@ -22,8 +28,8 @@ export const useSignalingStore = defineStore("signaling", {
         },
         clearRemotes () {
             for (const key in this.remotes) {
-                if (obj.hasOwnProperty(key)) {
-                    obj[key].pc.close()
+                if (this.remotes.hasOwnProperty(key)) {
+                    this.remotes[key].pc.close()
                 }
             }
             this.remotes = {}
@@ -65,8 +71,7 @@ export const useSignalingStore = defineStore("signaling", {
             const video = document.createElement('video')
             video.setAttribute('autoplay', true)
             video.setAttribute('playsinline', true)
-            videos.append(video)
-
+            video.style.backgroundColor = 'black';
             const client = {
                 pc,
                 video
@@ -107,7 +112,7 @@ export const useSignalingStore = defineStore("signaling", {
         },
         sendMsg (toId, msg) {
             this.sockets.sendObj({
-                from: Session.get('userInfo').id,
+                from: String(Session.get('userInfo').id),
                 to: toId,
                 msg
             })
@@ -122,7 +127,9 @@ export const useSignalingStore = defineStore("signaling", {
             this.observer.setUrl(this.getWsUrl())
         },
         close() {
-            this.observer.close()
+            if (this.observer) {
+                this.observer.close()
+            }
         }
     }
 })

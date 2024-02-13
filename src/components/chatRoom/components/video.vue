@@ -22,13 +22,13 @@ const emit = defineEmits(['initVideo'])
 const startVideo = () => {
   //console.log(props.contact)
   // 检查对方是否在线
-  if (!props.contact.online) {
-    modalDialog({}, {
-      header: ()=> "提示",
-      body: ()=> `用户${props.contact.username}不在线，无法发起视频通话！`,
-    })
-    return
-  }
+  // if (!props.contact.online) {
+  //   modalDialog({}, {
+  //     header: ()=> "提示",
+  //     body: ()=> `用户${props.contact.username}不在线，无法发起视频通话！`,
+  //   })
+  //   return
+  // }
   emit('initVideo', props.contact)
 }
 </script>

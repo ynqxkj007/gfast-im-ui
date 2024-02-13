@@ -37,7 +37,7 @@ import {useChatStore} from "/@/stores/chat";
 import {useUserInfo} from "/@/stores/userInfo";
 import {Session} from "/@/utils/storage";
 import {ElMessage} from "element-plus";
-import {getHistoryMessage, addRoom, updateRoomName, quitRoom, addGroupMember, updateRoomNotice} from "/@/api/chat/chat";
+import {getHistoryMessage, addRoom, updateRoomName, quitRoom, addGroupMember, updateRoomNotice, initVideoConn} from "/@/api/chat/chat";
 import {buildImgUrl} from '/@/components/chatRoom/js/utils.js'
 import {getEditUser} from '/@/api/system/user/index'
 import closeImg from '/@/components/chatRoom/img/close.png'
@@ -55,7 +55,9 @@ const uploadApi = baseUrl + "api/v1/chat/upload/singleImg"
 import modal from "/@/components/chatRoom/components/modal/modal.vue";
 import { useCommandComponent } from '/@/hooks/useCommandComponent';
 const modalDialog = useCommandComponent(modal)
-
+modalDialog.clone = () => {
+  return useCommandComponent(modal)
+}
 const props = defineProps({
   modelValue:{
     type: Boolean,
@@ -75,21 +77,23 @@ const show = computed({
 
 const myChatRef = ref(null)
 
-
 // 创建视频房间
 const initVideo = (contact) => {
-  //console.log(contact)
+  console.log("initVideo->contact:", contact)
   const videoRef = ref()
   modalDialog({
     mask:false,
     onClose:()=> {
-      signalingStore.clearRemotes()
+      //signalingStore.clearRemotes()
+      signalingStore.closeRemotes(contact.id)
       signalingStore.close()
     }
   }, {
     header: ()=> `正在和${contact.username}进行通话`,
     body: ()=> h(DoubleVideo,{ref: videoRef, onSuccess: value => {
-        console.log(value)
+        //console.log(value)
+        // 通知目标进行视频连接
+        initVideoConn({from:currentUser.value.id, to:[contact.id], roomId: value})
     }}),
   })
 
@@ -397,8 +401,8 @@ onMounted( ()=> {
           const message = JSON.parse(res.data)
           // console.log(message)
           /**
-           * type: 0 用户消息 1 用户进入 2 用户退出 3 错误消息 4 新增群聊 5 群成员加入 6 群成员退出
-           * c_type: 0 文本 1 图片
+           * type: 0 用户消息 1 用户进入 2 用户退出 3 错误消息 4 新增群聊 5 群成员加入 6 群成员退出 7 群聊通知  8 用户发起视频通话
+           * c_type: 0 文本 1 图片 2 json
            * isSys: 0 普通用户消息 1 系统消息
            */
           const {c_type, content, msg_time, type, user, ats, room_id} = message
@@ -532,6 +536,42 @@ onMounted( ()=> {
             } else if (type === 2) {
               // 用户退出
               chatStore.offline(contactMark)
+            } else if (type === 8) {
+              // 用户发起视频通话
+              const obj = JSON.parse(content)
+              //console.log("init video", uid, obj)
+              const fromUser = chatStore.getUser(uid)
+              if (fromUser) {
+                //console.log(fromUser, obj.roomId)
+                const modalDialog1 = modalDialog.clone()
+                modalDialog1({
+                  mask:false,
+                  confirm:true,
+                  onConfirm: () => {
+                    modalDialog1.close()
+                    const videoRef = ref()
+                    // 同意后开启视频通话
+                    modalDialog1({
+                      mask:false,
+                      onClose:()=> {
+                        signalingStore.closeRemotes(fromUser.id)
+                        signalingStore.close()
+                      }
+                    }, {
+                      header: ()=> `正在和[${fromUser.username}]进行通话`,
+                      body: ()=> h(DoubleVideo,{ref: videoRef, roomId: obj.roomId}),
+                    })
+                  },
+                  onClose: () => {
+                  }
+                }, {
+                  header: ()=> "提示",
+                  body: ()=> `用户[${fromUser.username}]向您发起了视频通话请求是否接受?`,
+                  footer:()=> {}
+                })
+              }
+
+
             }
 
           }

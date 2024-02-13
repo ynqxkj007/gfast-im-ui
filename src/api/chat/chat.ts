@@ -84,3 +84,13 @@ export function updateRoomNotice(data:any) {
     })
 }
 
+
+// 发起视频通话请求
+export function initVideoConn(data:any) {
+    return request({
+        url: '/api/v1/chat/initVideo',
+        method: 'post',
+        data
+    })
+}
+

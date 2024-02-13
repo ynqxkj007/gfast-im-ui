@@ -11,6 +11,7 @@
 
         <div class="modal-footer">
           <slot name="footer">
+            <button v-if="props.confirm" class="modal-default-button my-button" @click="$emit('confirm')">确定</button>
             <button class="modal-default-button my-info-button" @click="$emit('close')">取消</button>
           </slot>
         </div>
@@ -35,6 +36,10 @@ const props = defineProps({
   mask: {
     type: Boolean,
     default: true
+  },
+  confirm: {
+    type: Boolean,
+    default : false
   }
 })
 

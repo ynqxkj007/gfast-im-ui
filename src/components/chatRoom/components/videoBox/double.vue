@@ -1,7 +1,7 @@
 <template>
   <div class="video-box">
-    <video ref="currentVideo" autoplay muted playsinline></video>
-    <div ref="videos"></div>
+    <video class="video-big" ref="currentVideo" width="450" height="210" style="background: #000;" autoplay muted playsinline></video>
+    <div class="video-little" ref="videos"></div>
   </div>
 </template>
 
@@ -25,10 +25,12 @@ const emit = defineEmits(['success'])
 navigator.mediaDevices
     .getUserMedia({
       audio: true, // 本地测试防止回声
-      video: { width: 600, height: 300 }
+      video: { width: 450, height: 200 },
+      aspectRatio: { ideal: 9 / 16 } // 16:9 比例
     })
     .then(stream => {
         currentVideo.value.srcObject = stream
+        signalingStore.close()
         signalingStore.setRoomId(props.roomId)
         signalingStore.connect({
           reconnection:true,
@@ -42,14 +44,17 @@ navigator.mediaDevices
         }
 
         signalingStore.sockets.onmessage = (evt) => {
-          console.log("signaling onmessage:" + evt.data);
+          //console.log("signaling onmessage:" + evt.data);
           try {
             const content = JSON.parse(evt.data)
             const {from, msg} =  content
             switch(msg.type) {
               case 'join' : {
-                // 有新的人加入就重新设置会话，重新与新加入的人建立新会话
-                const pc = signalingStore.createRTC(stream, from).pc
+                const {pc, video} = signalingStore.createRTC(stream, from)
+                initVideoElement(video)
+                video.width = 150;
+                video.height = 70;
+                videos.value.append(video)
                 pc.createOffer().then(offer => {
                   pc.setLocalDescription(offer)
                   console.log(`join: ${from}, send offer:`, offer)
@@ -59,18 +64,21 @@ navigator.mediaDevices
               }
               case 'leave': {
                 console.log(`leave: ${from}, receive leave:`, msg)
-                if (signalingStore.remotes[from]) {
-                  // signalingStore.remotes[from].pc.close()
-                  // videos.value.removeChild(signalingStore.remotes[from].video)
-                  // delete signalingStore.remotes[from]
+                const r = signalingStore.getRemote(from)
+                console.log(r)
+                if (r) {
                   signalingStore.closeRemotes(from)
-                  videos.value.removeChild(signalingStore.remotes[from].video)
+                  videos.value.removeChild(r.video)
                 }
                 break
               }
               case 'offer' : {
                 console.log(`from: ${from}, receive offer:`, msg)
-                const pc = signalingStore.createRTC(stream, from).pc
+                const {pc, video} = signalingStore.createRTC(stream, from)
+                initVideoElement(video)
+                video.width = 150;
+                video.height = 70;
+                videos.value.append(video)
                 pc.setRemoteDescription(new RTCSessionDescription(msg.offer))
                 pc.createAnswer().then(answer => {
                   pc.setLocalDescription(answer)
@@ -117,13 +125,32 @@ navigator.mediaDevices
         signalingStore.sockets.onerror = (event) => {
           console.log("signaling error:", event);
         }
-
-        // 向目标发出邀请
     })
+    .catch(e=> {
+      console.error("getUserMedia error:", e)
+    })
+
+const initVideoElement = (el) => {
+  el.addEventListener('click', event => {
+    //console.log(event)
+    const tempSrc = el.srcObject;
+    el.srcObject = currentVideo.value.srcObject
+    currentVideo.value.srcObject = tempSrc
+  })
+
+}
 </script>
 
 <style scoped>
 .video-box{
+  display: flex;
+  flex-direction:column;
+}
 
+.video-big {
+
+}
+.video-little {
+  margin-top:10px;
 }
 </style>
