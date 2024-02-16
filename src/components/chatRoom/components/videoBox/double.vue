@@ -50,7 +50,12 @@ navigator.mediaDevices
             const {from, msg} =  content
             switch(msg.type) {
               case 'join' : {
-                const {pc, video} = signalingStore.createRTC(stream, from)
+                const {pc, video} = signalingStore.createRTC(stream, from, (remote, event) => {
+                  if(remote) {
+                    remote.video.srcObject = stream
+                    currentVideo.value.srcObject = event.streams[0]
+                  }
+                })
                 initVideoElement(video)
                 video.width = 150;
                 video.height = 70;
@@ -69,12 +74,18 @@ navigator.mediaDevices
                 if (r) {
                   signalingStore.closeRemotes(from)
                   videos.value.removeChild(r.video)
+                  currentVideo.value.srcObject = stream
                 }
                 break
               }
               case 'offer' : {
                 console.log(`from: ${from}, receive offer:`, msg)
-                const {pc, video} = signalingStore.createRTC(stream, from)
+                const {pc, video} = signalingStore.createRTC(stream, from, (remote, event) => {
+                  if(remote) {
+                    remote.video.srcObject = stream
+                    currentVideo.value.srcObject = event.streams[0]
+                  }
+                })
                 initVideoElement(video)
                 video.width = 150;
                 video.height = 70;

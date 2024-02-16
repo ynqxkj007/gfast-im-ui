@@ -34,7 +34,7 @@ export const useSignalingStore = defineStore("signaling", {
             }
             this.remotes = {}
         },
-        createRTC (stream:any, id:string) {
+        createRTC (stream:any, id:string, trackCallBack = function (a:any, b:any) {}) {
             const pc = new RTCPeerConnection({
                 iceServers: [
                     {
@@ -62,6 +62,7 @@ export const useSignalingStore = defineStore("signaling", {
             pc.addEventListener('track', event => {
                 console.log(`track`)
                 this.remotes[id].video.srcObject = event.streams[0]
+                trackCallBack(this.remotes[id], event)
             })
 
             // 添加本地视频流到会话中
