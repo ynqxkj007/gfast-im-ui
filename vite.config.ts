@@ -41,7 +41,7 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					rewrite: (path) => path.replace(/^\/gitee/, ''),
 				},
 				'/apix': {
-					target: 'http://192.168.3.82:8808', // 目标服务器地址
+					target: 'http://192.168.0.14:8808', // 目标服务器地址
 					ws: true,
 					changeOrigin: true, // 是否改变源地址
 					rewrite: (path) => path.replace(/^\/apix/, '') // 重写路径，移除 /api 前缀

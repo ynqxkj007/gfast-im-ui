@@ -30,9 +30,9 @@
 
     <div class="login-footer">
       <div style="width:500px;margin:auto;background-color: #E6A23C;border-radius: 5px;text-align: left;padding:10px;color:#fff;">
+        <p>可登录以下账号进行测试：</p>
         <p>演示账号：10001至10005</p>
-        <p>密码：123456</p>
-        <p>请注意同一个账号多地登录时，只有其中一个账号可以正常使用站内的即时通讯模块。需要测试功能时请使用不同的账号登录，谢谢！</p>
+        <p>密码均为：123456</p>
       </div>
       <div class="login-footer-content mt15">
         <div class="login-footer-content-warp">
