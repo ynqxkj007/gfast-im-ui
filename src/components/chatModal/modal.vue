@@ -79,7 +79,7 @@ const myChatRef = ref(null)
 
 // 创建视频房间
 const initVideo = (contact) => {
-  console.log("initVideo->contact:", contact)
+  //console.log("initVideo->contact:", contact)
   const videoRef = ref()
   modalDialog({
     mask:false,
@@ -171,6 +171,7 @@ const editRoomNameHandle = ({friend, name, close}) => {
 // 关闭
 const closeHandle = () => {
   show.value = false
+  myChatRef.value.closeAllHandle()
 }
 
 const getUploadUrl = () => {

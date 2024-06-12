@@ -153,6 +153,12 @@ export default {
     }
   },
   methods: {
+    // 关闭所有子窗口
+    closeAllHandle() {
+      this.showGroupChat = false
+      this.showGroupMember = false
+      this.showEditInformModal = false
+    },
     // 创建群聊
     createGroupHandle(e) {
       this.$emit("createGroup", e)
