@@ -45,7 +45,7 @@
     <div class="bottom">
       <div class="tools">
 <!--        发送图片-->
-        <span><UploadImg  :uploadUrl="uploadUrl" @success="uploadImgSuccess"></UploadImg></span>
+        <span><UploadImg :uploadUrl="uploadUrl" @success="uploadImgSuccess"></UploadImg></span>
 <!--        单人视频通话-->
         <Video v-if="!contact.isRoom" :contact="contact" style="margin-left:10px; cursor: pointer;" @initVideo="e => $emit('initVideo', e)"></Video>
       </div>
@@ -280,9 +280,9 @@ export default {
           fromUserInfo: {
             uid: this.currentUser.id,
             nickname: this.currentUser.username,
-            avatar: this.currentUser.avatar
+            avatar:this.currentUser.avatar
           },
-          contactMark:this.contact.id,
+          contactMark: this.contact.id,
           message: path,
           time: formatDate(new Date()),
           mType:'img',       // 消息类型：file | img | txt
@@ -292,9 +292,9 @@ export default {
           roomUsers: this.contact.roomUsers,
           roomId: this.contact.isRoom ? this.contact.id: "",
         }
-
+        //console.log("图片:", entity)
         this.addMsgList(entity)
-        this.$emit("say",this.contact.id, entity)
+        this.$emit("say", this.contact.id, entity)
       } else {
         console.error("uploadImg error", message)
       }
@@ -326,6 +326,7 @@ export default {
         roomUsers: this.contact.roomUsers,
         roomId: this.contact.isRoom ? this.contact.id: "",
       }
+      //console.log("文本:", entity)
       this.addMsgList(entity)
       this.$emit("say", this.contact.id,  entity)
       this.msg = ''

@@ -18,23 +18,22 @@ export default {
         console.error("uploadUrl必须")
         return
       }
-
       let fileInput =  document.getElementById(uploadImgFileInputId)
-      if(!fileInput) {
-        fileInput = document.createElement('input')
-        fileInput.type = 'file';
-        fileInput.accept = '.jpg,.png,.gif';
-        fileInput.id = uploadImgFileInputId;
-        fileInput.style.display = 'none';
-        fileInput.onchange = (event) => {
-          this.handleFileSelect(event);
-        };
-        window.document.body.appendChild(fileInput)
-      }
+      fileInput = document.createElement('input')
+      fileInput.type = 'file';
+      fileInput.accept = '.jpg,.png,.gif';
+      fileInput.id = uploadImgFileInputId;
+      fileInput.style.display = 'none';
+      fileInput.onchange = (event) => {
+        this.handleFileSelect(event, ()=> {
+          fileInput.parentNode.removeChild(fileInput)
+        });
+      };
+      window.document.body.appendChild(fileInput)
       fileInput.click()
     },
 
-    handleFileSelect(event){
+    handleFileSelect(event, done){
       const file = event.target.files.length > 0 ? event.target.files[0] : null
       if (file) {
         const formData = new FormData();
@@ -53,6 +52,8 @@ export default {
           } else if(xhr.readyState === 4) {
             console.log(`上传失败: ${xhr.statusText}`);
           }
+          if(typeof done === 'function') done()
+
         };
 
         xhr.send(formData);
